@@ -1,6 +1,6 @@
 <?php
 $page_title = "Manage Lockers";
-require_once '../includes/header_admin.php';
+require_once '../includes/header_subbanker.php';
 $conn = getDBConnection();
 
 $msg = ''; $err = '';
@@ -12,10 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $loc  = trim($_POST['location']);
     $stmt = $conn->prepare("INSERT INTO lockers (locker_number, locker_size, annual_rent, location) VALUES (?,?,?,?)");
     $stmt->bind_param("ssds", $num, $size, $rent, $loc);
-    if ($stmt->execute()) {
-        $msg = "Locker added successfully!";
-        logActivity($conn, 'admin', $_SESSION['admin_id'], $_SESSION['admin_name'], "Added locker: $num");
-    }
+    if ($stmt->execute()) $msg = "Locker added successfully!";
     else $err = "Error: " . $conn->error;
 }
 // Update status
@@ -27,18 +24,6 @@ if (isset($_GET['status']) && isset($_GET['id'])) {
             $conn->query("UPDATE lockers SET status='$st' WHERE id=$id");
             $msg = "Locker status updated.";
         } else { $err = "Cannot change status of an allocated locker."; }
-    }
-}
-// Delete locker
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    $chk = $conn->query("SELECT status, locker_number FROM lockers WHERE id=$id")->fetch_assoc();
-    if ($chk && $chk['status'] !== 'allocated') {
-        $conn->query("DELETE FROM lockers WHERE id=$id");
-        $msg = "Locker " . $chk['locker_number'] . " deleted.";
-        logActivity($conn, 'admin', $_SESSION['admin_id'], $_SESSION['admin_name'], "Deleted locker: " . $chk['locker_number']);
-    } else {
-        $err = "Cannot delete an allocated locker. Surrender it first.";
     }
 }
 
@@ -75,7 +60,7 @@ $lockers = $conn->query("SELECT * FROM lockers ORDER BY locker_number");
         <label class="form-label">Location / Description</label>
         <input type="text" name="location" class="form-control" placeholder="e.g. Main Branch Vault - Row A" required>
       </div>
-      <button type="submit" class="btn btn-primary">➕ Add Locker</button>
+      <button type="submit" class="btn btn-teal">➕ Add Locker</button>
     </form>
   </div>
 </div>
@@ -99,12 +84,11 @@ $lockers = $conn->query("SELECT * FROM lockers ORDER BY locker_number");
           <td>
             <?php if($l['status'] !== 'allocated'): ?>
             <?php if($l['status'] !== 'available'): ?>
-            <a href="?status=available&id=<?= $l['id'] ?>" class="btn btn-success btn-sm">✅ Available</a>
+            <a href="?status=available&id=<?= $l['id'] ?>" class="btn btn-success btn-sm">✅ Set Available</a>
             <?php endif; ?>
             <?php if($l['status'] !== 'maintenance'): ?>
             <a href="?status=maintenance&id=<?= $l['id'] ?>" class="btn btn-warning btn-sm">🔧 Maintenance</a>
             <?php endif; ?>
-            <a href="?delete=<?= $l['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Delete this locker permanently?')">🗑️ Delete</a>
             <?php else: ?>
             <span style="font-size:12px;color:#888;">Allocated</span>
             <?php endif; ?>
@@ -116,4 +100,4 @@ $lockers = $conn->query("SELECT * FROM lockers ORDER BY locker_number");
   </div>
 </div>
 
-<?php $conn->close(); require_once '../includes/footer_admin.php'; ?>
+<?php $conn->close(); require_once '../includes/footer_subbanker.php'; ?>

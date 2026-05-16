@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">🔐 Login</button>
     </form>
     <div class="text-center mt-15" style="font-size:13px;">
-      New customer? <a href="register.php" style="color:#1a3a5c;font-weight:600;">Register here</a>
+      New customer? <a href="<?= $base ?>/new_locker_request.php" style="color:#1a3a5c;font-weight:600;">Request a locker</a>
       &nbsp;|&nbsp; <a href="<?= $base ?>/index.php" style="color:#888;">← Home</a>
     </div>
   </div>

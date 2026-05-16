@@ -1,6 +1,6 @@
 <?php
 $page_title = "Allocate Locker";
-require_once '../includes/header_admin.php';
+require_once '../includes/header_subbanker.php';
 $conn = getDBConnection();
 $msg = ''; $err = '';
 
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pay_st   = $_POST['payment_status'];
     $remarks  = trim($_POST['remarks'] ?? '');
     $alloc_no = generateAllocationNo($conn);
-    $allocated_by = 'Admin: ' . ($_SESSION['admin_name'] ?? 'Admin');
+    $allocated_by = 'Sub Banker: ' . ($_SESSION['subbanker_name'] ?? 'Unknown');
 
     $chk = $conn->query("SELECT status FROM lockers WHERE id=$lock_id")->fetch_assoc();
     if ($chk['status'] !== 'available') {
@@ -22,16 +22,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->begin_transaction();
         try {
             $stmt = $conn->prepare("INSERT INTO allocations (allocation_no,customer_id,locker_id,allocation_date,expiry_date,rent_paid,payment_status,guide_approval,allocated_by,remarks) VALUES (?,?,?,?,?,?,?,?,?,?)");
-            $guide = 'approved';
-            $stmt->bind_param("siissdssss", $alloc_no, $cust_id, $lock_id, $alloc_dt, $expiry, $rent, $pay_st, $guide, $allocated_by, $remarks);
+            $guide_status = 'pending';
+            $stmt->bind_param("siissdssss", $alloc_no, $cust_id, $lock_id, $alloc_dt, $expiry, $rent, $pay_st, $guide_status, $allocated_by, $remarks);
             $stmt->execute();
+            $alloc_id = $conn->insert_id;
+
+            $stmt2 = $conn->prepare("INSERT INTO guide_approvals (allocation_id, requested_by) VALUES (?, ?)");
+            $stmt2->bind_param("is", $alloc_id, $allocated_by);
+            $stmt2->execute();
+
             $conn->query("UPDATE lockers SET status='allocated' WHERE id=$lock_id");
             $conn->commit();
-            $msg = "Locker allocated successfully! Allocation No: $alloc_no";
-            logActivity($conn, 'admin', $_SESSION['admin_id'], $_SESSION['admin_name'], "Allocated locker - $alloc_no");
+            $msg = "Locker allocated! Allocation No: $alloc_no — Awaiting Guide Approval ⏳";
         } catch (Exception $e) {
             $conn->rollback();
-            $err = "Failed to allocate: " . $e->getMessage();
+            $err = "Failed: " . $e->getMessage();
         }
     }
 }
@@ -42,6 +47,8 @@ $lockers   = $conn->query("SELECT id, locker_number, locker_size, annual_rent FR
 
 <?php if($msg): ?><div class="alert alert-success">✅ <?= htmlspecialchars($msg) ?></div><?php endif; ?>
 <?php if($err): ?><div class="alert alert-danger">⚠️ <?= htmlspecialchars($err) ?></div><?php endif; ?>
+
+<div class="alert alert-info">ℹ️ Allocations by Sub Banker require <strong>Guide Approval</strong> before becoming fully active.</div>
 
 <div class="card">
   <div class="card-header"><h3>➕ Allocate Locker to Customer</h3></div>
@@ -78,7 +85,7 @@ $lockers   = $conn->query("SELECT id, locker_number, locker_size, annual_rent FR
         </div>
         <div class="form-group">
           <label class="form-label">Rent Paid (₹) *</label>
-          <input type="number" name="rent_paid" class="form-control" required id="rentField" placeholder="Auto-filled from locker" step="0.01" min="0">
+          <input type="number" name="rent_paid" class="form-control" required id="rentField" step="0.01" min="0">
         </div>
         <div class="form-group">
           <label class="form-label">Payment Status *</label>
@@ -92,7 +99,7 @@ $lockers   = $conn->query("SELECT id, locker_number, locker_size, annual_rent FR
         <label class="form-label">Remarks</label>
         <textarea name="remarks" class="form-control" placeholder="Optional notes..."></textarea>
       </div>
-      <button type="submit" class="btn btn-primary">🔑 Allocate Locker</button>
+      <button type="submit" class="btn btn-teal">🔑 Allocate Locker</button>
       <a href="allocations.php" class="btn btn-secondary" style="margin-left:10px;">Cancel</a>
     </form>
   </div>
@@ -106,4 +113,4 @@ document.getElementById('lockerSelect').addEventListener('change', function() {
 });
 </script>
 
-<?php $conn->close(); require_once '../includes/footer_admin.php'; ?>
+<?php $conn->close(); require_once '../includes/footer_subbanker.php'; ?>

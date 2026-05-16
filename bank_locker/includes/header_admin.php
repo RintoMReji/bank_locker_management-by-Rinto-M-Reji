@@ -27,7 +27,7 @@ $base = BASE_URL;
     <a href="<?= $base ?>/admin/dashboard.php" <?= (basename($_SERVER['PHP_SELF'])=='dashboard.php')?'class="active"':'' ?>>
       <span class="icon">📊</span> Dashboard
     </a>
-    <div class="nav-section-label">Locker</div>
+    <div class="nav-section-label">Locker Management</div>
     <a href="<?= $base ?>/admin/lockers.php" <?= (basename($_SERVER['PHP_SELF'])=='lockers.php')?'class="active"':'' ?>>
       <span class="icon">🔒</span> Manage Lockers
     </a>
@@ -35,20 +35,42 @@ $base = BASE_URL;
       <span class="icon">📋</span> Allocations
     </a>
     <a href="<?= $base ?>/admin/allocate_locker.php" <?= (basename($_SERVER['PHP_SELF'])=='allocate_locker.php')?'class="active"':'' ?>>
-      <span class="icon">➕</span> Allocate Locker
+      <span class="icon">➕</span> Assign Locker
     </a>
-    <div class="nav-section-label">Customers</div>
+    <a href="<?= $base ?>/admin/search_allocations.php" <?= (basename($_SERVER['PHP_SELF'])=='search_allocations.php')?'class="active"':'' ?>>
+      <span class="icon">🔍</span> Search Allocations
+    </a>
+    <div class="nav-section-label">People</div>
     <a href="<?= $base ?>/admin/customers.php" <?= (basename($_SERVER['PHP_SELF'])=='customers.php')?'class="active"':'' ?>>
       <span class="icon">👥</span> Customers
     </a>
     <a href="<?= $base ?>/admin/add_customer.php" <?= (basename($_SERVER['PHP_SELF'])=='add_customer.php')?'class="active"':'' ?>>
       <span class="icon">👤</span> Add Customer
     </a>
-    <div class="nav-section-label">Reports</div>
+    <a href="<?= $base ?>/admin/sub_bankers.php" <?= (basename($_SERVER['PHP_SELF'])=='sub_bankers.php'||basename($_SERVER['PHP_SELF'])=='add_sub_banker.php')?'class="active"':'' ?>>
+      <span class="icon">🏛️</span> Manage Sub-Bankers
+    </a>
+    <div class="nav-section-label">Approvals</div>
+    <a href="<?= $base ?>/admin/locker_requests.php" <?= (basename($_SERVER['PHP_SELF'])=='locker_requests.php')?'class="active"':'' ?>>
+      <span class="icon">📩</span> Locker Requests
+    </a>
+    <a href="<?= $base ?>/admin/delete_requests.php" <?= (basename($_SERVER['PHP_SELF'])=='delete_requests.php')?'class="active"':'' ?>>
+      <span class="icon">🗑️</span> Delete Requests
+    </a>
+    <div class="nav-section-label">Reports & Logs</div>
+    <a href="<?= $base ?>/admin/reports.php" <?= (basename($_SERVER['PHP_SELF'])=='reports.php')?'class="active"':'' ?>>
+      <span class="icon">📈</span> Generate Reports
+    </a>
     <a href="<?= $base ?>/admin/access_log.php" <?= (basename($_SERVER['PHP_SELF'])=='access_log.php')?'class="active"':'' ?>>
-      <span class="icon">📝</span> Access Log
+      <span class="icon">📝</span> Access Logs
     </a>
     <div class="nav-section-label">Account</div>
+    <a href="<?= $base ?>/admin/profile.php" <?= (basename($_SERVER['PHP_SELF'])=='profile.php')?'class="active"':'' ?>>
+      <span class="icon">⚙️</span> Update Profile
+    </a>
+    <a href="<?= $base ?>/admin/manage_passwords.php" <?= (basename($_SERVER['PHP_SELF'])=='manage_passwords.php')?'class="active"':'' ?>>
+      <span class="icon">🔑</span> Manage Passwords
+    </a>
     <a href="<?= $base ?>/admin/logout.php"><span class="icon">🚪</span> Logout</a>
   </nav>
 </aside>

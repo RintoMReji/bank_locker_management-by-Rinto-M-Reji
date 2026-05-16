@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS admin (
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) DEFAULT '',
+    phone VARCHAR(15) DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -50,6 +52,8 @@ CREATE TABLE IF NOT EXISTS allocations (
     rent_paid DECIMAL(10,2) NOT NULL,
     payment_status ENUM('paid', 'pending', 'overdue') DEFAULT 'paid',
     status ENUM('active', 'surrendered') DEFAULT 'active',
+    guide_approval ENUM('pending', 'approved', 'rejected') DEFAULT 'approved',
+    allocated_by VARCHAR(100) DEFAULT 'Admin',
     remarks TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(id),
@@ -70,10 +74,94 @@ CREATE TABLE IF NOT EXISTS access_log (
     FOREIGN KEY (locker_id) REFERENCES lockers(id)
 );
 
+-- Sub Banker Table
+CREATE TABLE IF NOT EXISTS sub_banker (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    employee_id VARCHAR(20) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(15) NOT NULL,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Locker Requests Table (customer requests for new locker)
+CREATE TABLE IF NOT EXISTS locker_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    locker_size ENUM('small','medium','large') NOT NULL,
+    preferred_location VARCHAR(100) DEFAULT '',
+    reason TEXT,
+    status ENUM('pending','approved','rejected') DEFAULT 'pending',
+    handled_by VARCHAR(100) DEFAULT NULL,
+    handled_remarks TEXT,
+    handled_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+
+-- Delete Requests Table
+CREATE TABLE IF NOT EXISTS delete_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    allocation_id INT NOT NULL,
+    reason TEXT NOT NULL,
+    status ENUM('pending','approved','rejected') DEFAULT 'pending',
+    handled_by VARCHAR(100) DEFAULT NULL,
+    handled_remarks TEXT,
+    handled_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id),
+    FOREIGN KEY (allocation_id) REFERENCES allocations(id)
+);
+
+-- Contact Messages Table
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    reply TEXT DEFAULT NULL,
+    replied_by VARCHAR(100) DEFAULT NULL,
+    status ENUM('unread','read','replied') DEFAULT 'unread',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+
+-- Password Resets Table
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_type ENUM('admin','sub_banker','customer') NOT NULL,
+    user_id INT NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    used TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Activity Log Table
+CREATE TABLE IF NOT EXISTS activity_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_type VARCHAR(20) NOT NULL,
+    user_id INT NOT NULL,
+    user_name VARCHAR(100) NOT NULL,
+    action VARCHAR(255) NOT NULL,
+    details TEXT,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Insert default admin
 INSERT INTO admin (username, password, full_name) VALUES 
 ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Bank Administrator');
 -- Default admin password: password
+
+-- Insert default sub banker (password: subbanker123)
+INSERT INTO sub_banker (username, password, full_name, employee_id, email, phone) VALUES
+('subbanker', '$2y$10$YS4rK8qDl8mXn0fQ6rVZpOJvHk3Fv2b8C5nR7mT1wX9zA4eB6gHjy', 'Sub Banker Officer', 'EMP2024001', 'subbanker@securebank.com', '9876543210');
+-- Default sub banker password: subbanker123
 
 -- Insert sample lockers
 INSERT INTO lockers (locker_number, locker_size, annual_rent, location) VALUES

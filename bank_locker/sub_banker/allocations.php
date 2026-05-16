@@ -1,19 +1,21 @@
 <?php
 $page_title = "Allocations";
-require_once '../includes/header_admin.php';
+require_once '../includes/header_subbanker.php';
 $conn = getDBConnection();
 $msg = '';
 
-// Surrender locker
+// Surrender locker (only if guide approved)
 if (isset($_GET['surrender'])) {
     $id = intval($_GET['surrender']);
-    $row = $conn->query("SELECT locker_id FROM allocations WHERE id=$id AND status='active'")->fetch_assoc();
-    if ($row) {
+    $row = $conn->query("SELECT locker_id, guide_approval FROM allocations WHERE id=$id AND status='active'")->fetch_assoc();
+    if ($row && $row['guide_approval'] === 'approved') {
         $conn->begin_transaction();
         $conn->query("UPDATE allocations SET status='surrendered' WHERE id=$id");
         $conn->query("UPDATE lockers SET status='available' WHERE id={$row['locker_id']}");
         $conn->commit();
         $msg = "Locker surrendered and is now available.";
+    } elseif ($row) {
+        $msg = "Cannot surrender — Guide approval is still pending or rejected.";
     }
 }
 
@@ -35,7 +37,7 @@ $allocations = $conn->query("
   <div class="table-responsive">
     <table>
       <thead>
-        <tr><th>#</th><th>Alloc No.</th><th>Customer</th><th>Locker</th><th>Size</th><th>Date</th><th>Expiry</th><th>Rent</th><th>Payment</th><th>Status</th><th>Guide</th><th>By</th><th>Actions</th></tr>
+        <tr><th>#</th><th>Alloc No.</th><th>Customer</th><th>Locker</th><th>Size</th><th>Date</th><th>Expiry</th><th>Rent</th><th>Payment</th><th>Status</th><th>Guide</th><th>Actions</th></tr>
       </thead>
       <tbody>
         <?php $i=1; while($a=$allocations->fetch_assoc()): ?>
@@ -51,10 +53,11 @@ $allocations = $conn->query("
           <td><?= getStatusBadge($a['payment_status']) ?></td>
           <td><?= getStatusBadge($a['status']) ?></td>
           <td><?= getGuideApprovalBadge($a['guide_approval'] ?? 'approved') ?></td>
-          <td><small><?= htmlspecialchars($a['allocated_by'] ?? 'Admin') ?></small></td>
           <td>
-            <?php if($a['status']==='active'): ?>
+            <?php if($a['status']==='active' && ($a['guide_approval'] ?? '') === 'approved'): ?>
             <a href="?surrender=<?= $a['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Surrender this locker?')">🔓 Surrender</a>
+            <?php elseif(($a['guide_approval'] ?? '') === 'pending'): ?>
+            <span style="font-size:11px;color:#d97706;">Awaiting Guide</span>
             <?php else: ?>
             <span style="font-size:12px;color:#888;">Closed</span>
             <?php endif; ?>
@@ -66,4 +69,4 @@ $allocations = $conn->query("
   </div>
 </div>
 
-<?php $conn->close(); require_once '../includes/footer_admin.php'; ?>
+<?php $conn->close(); require_once '../includes/footer_subbanker.php'; ?>
